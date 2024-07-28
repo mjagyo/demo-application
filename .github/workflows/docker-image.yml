@@ -1,0 +1,48 @@
+name: Demo CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: |
+        cd application
+        npm install
+
+    - name: Run tests
+      run: |
+        cd application
+        npm test
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - uses: docker/login-action@v3
+      name: Login to Docker Hub
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      run: |
+        cd application
+        node --version
+        timestamp=$(date +%s)
+        docker build . --tag app-demo:$timestamp
+        docker tag app-demo:$timestamp mjagyo/test-node:1.0.0

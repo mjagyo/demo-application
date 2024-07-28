@@ -1,0 +1,37 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+jobs:
+- job: BuildAndTest
+  displayName: 'Build and Test'
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '14.x'
+    displayName: 'Install Node.js'
+
+  - script: |
+      cd application
+      npm install
+    displayName: 'Install Dependencies'
+
+  - script: |
+      cd application
+      npm test
+    displayName: 'Run Tests'
+
+- job: Deploy
+  displayName: 'Deploy'
+  dependsOn: BuildAndTest
+  condition: succeeded()
+  steps:
+  - script: |
+      cd application
+      docker build -t test-node:1.0.0 .
+      docker tag test-node:1.0.0 mjagyo/sample-application:1.0.0
+      docker push mjagyo/sample-application:1.0.0
+    displayName: 'Pushing Image to Registry'
+
